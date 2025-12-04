@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jayaharini.s Portfolio</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: #D7E8F7; /* pastel light blue */
+    color: #4A4A4A;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    max-width: 900px;
+    background: #FAF6F5; /* very light pink-cream */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    display: flex;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  /* Left column */
+  .left {
+    background: #B3D4FC; /* light pastel blue */
+    width: 35%;
+    color: #3F3A3A; /* dark muted brown */
+    padding: 30px 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Photo container parallelogram */
+  .photo-parallelogram {
+    width: 140px;
+    height: 210px;
+    background: #ECD9D0; /* light blush */
+    clip-path: polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #B27D6B; /* muted brown */
+    font-size: 1.4rem;
+    user-select: none;
+    margin-bottom: 20px;
+    font-family: 'Georgia', serif;
+  }
+  .left-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 55px;
+  }
+  .contact-info {
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    font-family: 'Georgia', serif;
+  }
+  .contact-info div {
+    margin: 8px 0;
+    white-space: nowrap;
+  }
+  .certifications {
+    font-size: 1rem;
+    font-family: 'Georgia', serif;
+  }
+  .certifications strong {
+    display: block;
+    margin-bottom: 10px;
+    border-bottom: 3px double #B27D6B;
+    padding-bottom: 6px;
+  }
+  .certifications ul {
+    padding-left: 22px;
+    margin: 0;
+  }
+  .certifications ul li {
+    margin-bottom: 8px;
+  }
+  /* Right column */
+  .right {
+    width: 65%;
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: 'Georgia', serif;
+  }
+  .name {
+    font-size: 2.4rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 0.1em;
+    color: #5E4B4B; /* muted dark rose */
+    text-transform: uppercase;
+  }
+  .aspiring {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #B27D6B;
+    margin-top: 8px;
+    margin-bottom: 28px;
+    font-style: italic;
+  }
+  .section-title {
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #B27D6B;
+    margin-bottom: 14px;
+    border-bottom: 3px double #B27D6B;
+    padding-bottom: 4px;
+    letter-spacing: 0.06em;
+  }
+  .about-me {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5E4B4B;
+    margin-bottom: 35px;
+  }
+  .education, .skills-list {
+    font-size: 1.05rem;
+    color: #5E4B4B;
+    margin-bottom: 45px;
+    padding-left: 22px;
+  }
+  .education li, .skills-list li {
+    margin-bottom: 12px;
+  }
+  .languages {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 35px;
+  }
+  .language {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #5E4B4B;
+    font-weight: 600;
+  }
+  .circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #B27D6B;
+    margin: 10px auto 0 auto;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
+  .bottom-social {
+    display: flex;
+    justify-content: flex-start;
+    gap: 48px;
+    border-top: 1px solid #D8B4A6;
+    padding-top: 26px;
+  }
+  .social-link {
+    text-decoration: none;
+    color: #B27D6B;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s ease;
+  }
+  .social-link:hover {
+    color: #5E4B4B;
+  }
+  .social-link svg {
+    fill: #B27D6B;
+    width: 22px;
+    height: 22px;
+    transition: fill 0.3s ease;
+  }
+  .social-link:hover svg {
+    fill: #5E4B4B;
+  }
+  @media(max-width: 720px) {
+    .container {
+      flex-direction: column;
+      max-width: 400px;
+    }
+    .left, .right {
+      width: 100%;
+      padding: 20px;
+    }
+    .bottom-social {
+      justify-content: center;
+    }
+    .photo-parallelogram {
+      height: 140px;
+      margin-bottom: 20px;
+    }
+    .left-bottom {
+      gap: 30px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="left">
+    <div class="photo-parallelogram">
+      Photo
+    </div>
+
+    <div class="left-bottom">
+      <div class="contact-info">
+        <div>📱 +91 98765 43210</div>
+        <div>✉ jayaharini2005@gmail.com</div>
+      </div>
+
+      <div class="certifications">
+        <strong>Certifications Completed</strong>
+        <ul>
+          <li>Infosys Springboard</li>
+          <li>MongoDB</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div>
+      <h1 class="name">JAYAHARINI.S</h1>
+      <div class="aspiring">Aspiring Full Stack Developer</div>
+
+      <div class="section-title">ABOUT ME</div>
+      <p class="about-me">
+        Passionate about building scalable and efficient web applications.
+        Completed certifications from Infosys Springboard.
+        Skilled in Java, JavaScript, and web technologies.
+        Eager to contribute and learn in a dynamic environment.
+      </p>
+
+      <div class="section-title">EDUCATIONAL DETAILS</div>
+      <ul class="education">
+        <li>Completed school at AKT School, Kallakurichi</li>
+        <li>Currently studying at Velalar College of Engineering and Technology, Erode</li>
+        <li>Department of Information Technology</li>
+      </ul>
+
+      <div class="section-title">SKILLS</div>
+      <ul class="skills-list">
+        <li>Java, Spring Boot</li>
+        <li>JavaScript, React.js</li>
+        <li>HTML5, CSS3</li>
+        <li>RESTful APIs & Microservices</li>
+        <li>MySQL, MongoDB</li>
+        <li>Git & Version Control</li>
+        <li>Agile & Scrum Methodologies</li>
+      </ul>
+
+      <div class="section-title">LANGUAGES</div>
+      <div class="languages">
+        <div class="language">
+          English
+          <div class="circle"></div>
+        </div>
+        <div class="language">
+          Tamil
+          <div class="circle"></div>
+        </div>
+        <div class="language">
+          Hindi
+          <div class="circle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-social">
+      <a class="social-link" href="https://linkedin.com/in/jayaharini" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+        <!-- LinkedIn SVG icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+          <path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11.5 20h-3v-10h3v10zm-1.5-11.25c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm13 11.25h-3v-5.5c0-1.32-1.68-1.22-1.68 0v5.5h-3v-10h3v1.34c1.4-2.59 6-2.79 6 2.47v6.19z"/>
+        </svg>
+        LinkedIn
+      </a>
+      <a class="social-link" href="https://github.com/jayaharini" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        <!-- GitHub SVG icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+          <path d="M12 0c-6.62 0-12 5.38-12 12 0 5.3 3.43 9.8 8.2 11.39.6.11.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.55-1.4-1.33-1.77-1.33-1.77-1.09-.75.08-.74.08-.74 1.21.08 1.85 1.24 1.85 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.39 1.23-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23.95-.27 1.98-.4 3-.4 1.02.01 2.04.14 3 .4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.17.76.83 1.23 1.91 1.23 3.22 0 4.6-2.81 5.62-5.48 5.92.43.37.82 1.11.82 2.23v3.3c0 .32.22.69.82.58 4.78-1.59 8.2-6.09 8.2-11.39 0-6.62-5.38-12-12-12z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
