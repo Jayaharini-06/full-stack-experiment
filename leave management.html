@@ -1,0 +1,185 @@
+// ---------------- BACKEND (Node + Express + MongoDB) -------------------
+
+const express = require("express");
+const mongoose = require("mongoose");
+const path = require("path");
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// MongoDB Connection
+mongoose
+  .connect("mongodb://127.0.0.1:27017/leaveSystem")
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
+
+const UserSchema = new mongoose.Schema({
+  name: String,
+  casual: { type: Number, default: 10 },
+  medical: { type: Number, default: 5 }
+});
+
+const LeaveSchema = new mongoose.Schema({
+  name: String,
+  type: String,
+  from: String,
+  to: String,
+  reason: String,
+});
+
+const User = mongoose.model("User", UserSchema);
+const Leave = mongoose.model("Leave", LeaveSchema);
+
+// Serve HTML UI
+app.get("/", (req, res) => {
+  res.send(htmlPage);
+});
+
+// Create User
+app.post("/createUser", async (req, res) => {
+  const { name } = req.body;
+  const user = new User({ name });
+  await user.save();
+  res.redirect("/");
+});
+
+// Apply Leave
+app.post("/applyLeave", async (req, res) => {
+  const { name, type, from, to, reason } = req.body;
+
+  const user = await User.findOne({ name });
+
+  if (!user) return res.send("<h3>User Not Found!</h3>");
+
+  // Deduct leave
+  let days =
+    (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 3600 * 24) + 1;
+
+  if (days < 1) return res.send("<h3>Invalid Date Range</h3>");
+
+  if (type === "casual") {
+    if (user.casual < days) return res.send("<h3>Not enough Casual Leave!</h3>");
+    user.casual -= days;
+  } else if (type === "medical") {
+    if (user.medical < days) return res.send("<h3>Not enough Medical Leave!</h3>");
+    user.medical -= days;
+  }
+
+  await user.save();
+
+  const leave = new Leave({ name, type, from, to, reason });
+  await leave.save();
+
+  res.redirect("/");
+});
+
+// Get User Details (AJAX)
+app.get("/getUser/:name", async (req, res) => {
+  const data = await User.findOne({ name: req.params.name });
+  res.json(data);
+});
+
+// Get All Leaves (AJAX)
+app.get("/getLeaves/:name", async (req, res) => {
+  const data = await Leave.find({ name: req.params.name });
+  res.json(data);
+});
+
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+
+
+// ---------------- FRONTEND HTML + CSS + JS -------------------
+
+const htmlPage = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leave Management System</title>
+  <style>
+    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
+    .container { width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+    h2 { text-align: center; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; }
+    button { background: green; color: white; padding: 10px; border: none; margin-top: 10px; width: 100%; }
+    .box { margin-bottom: 20px; }
+    #result, #leavesList { background: #eee; padding: 10px; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Leave Management System</h2>
+
+    <!-- Create User -->
+    <div class="box">
+      <h3>Create User</h3>
+      <form action="/createUser" method="POST">
+        <input type="text" name="name" placeholder="Enter Name" required>
+        <button type="submit">Create User</button>
+      </form>
+    </div>
+
+    <!-- Apply Leave -->
+    <div class="box">
+      <h3>Apply Leave</h3>
+      <form action="/applyLeave" method="POST">
+        <input type="text" name="name" placeholder="Enter Name" required>
+        <select name="type">
+          <option value="casual">Casual Leave</option>
+          <option value="medical">Medical Leave</option>
+        </select>
+        <label>From Date</label>
+        <input type="date" name="from" required>
+        <label>To Date</label>
+        <input type="date" name="to" required>
+        <input type="text" name="reason" placeholder="Reason">
+        <button type="submit">Apply</button>
+      </form>
+    </div>
+
+    <!-- View Details -->
+    <div class="box">
+      <h3>View Leave Details</h3>
+      <input type="text" id="searchName" placeholder="Enter Name">
+      <button onclick="loadData()">Get Details</button>
+      
+      <div id="result"></div>
+      <h4>Applied Leaves</h4>
+      <div id="leavesList"></div>
+    </div>
+  </div>
+
+<script>
+function loadData() {
+  let name = document.getElementById('searchName').value.trim();
+  if (!name) return alert("Enter a name!");
+
+  fetch("/getUser/" + name)
+    .then(res => res.json())
+    .then(data => {
+      if (!data) {
+        document.getElementById("result").innerHTML = "<b>User not found</b>";
+        return;
+      }
+      document.getElementById("result").innerHTML =
+        "<b>Name:</b> " + data.name +
+        "<br><b>Casual Balance:</b> " + data.casual +
+        "<br><b>Medical Balance:</b> " + data.medical;
+    });
+
+  fetch("/getLeaves/" + name)
+    .then(res => res.json())
+    .then(list => {
+      let html = "";
+      list.forEach(l => {
+        html += "<div>Type: " + l.type + "<br>From: " + l.from + " - To: " + l.to + "<br>Reason: " + l.reason + "</div><hr>";
+      });
+      document.getElementById("leavesList").innerHTML = html || "No Leaves Applied";
+    });
+}
+</script>
+
+</body>
+</html>
+`;

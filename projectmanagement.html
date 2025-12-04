@@ -1,0 +1,405 @@
+// app.js
+// Single-file Project Management System (Node + Express + MongoDB + Frontend HTML/CSS/JS)
+
+// -------------------------------
+//  Requirements:
+//   npm install express mongoose
+//   Run MongoDB locally or change URI to your Atlas connection string
+// -------------------------------
+
+const express = require('express');
+const mongoose = require('mongoose');
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ---------- Configure MongoDB ----------
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/project_management_singlefile';
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(()=> console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connect error:', err));
+
+// ---------- Mongoose Schemas ----------
+const TaskSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  assignee: { type: String, default: '' },
+  dueDate: { type: Date, default: null },
+  completed: { type: Boolean, default: false },
+  notes: { type: String, default: '' }
+}, { timestamps: true });
+
+const ProjectSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String, default: '' },
+  startDate: { type: Date, default: Date.now },
+  endDate: { type: Date, default: null },
+  status: { type: String, enum: ['planning','active','completed','on-hold'], default: 'planning' },
+  tasks: [TaskSchema]
+}, { timestamps: true });
+
+const Project = mongoose.model('Project', ProjectSchema);
+
+// ------------------- Backend routes (JSON API) -------------------
+
+// Create project
+app.post('/api/projects', async (req, res) => {
+  try {
+    const { name, description, startDate, endDate, status } = req.body;
+    const p = new Project({ name, description, startDate: startDate||undefined, endDate: endDate||null, status });
+    const saved = await p.save();
+    res.status(201).json(saved);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Get all projects
+app.get('/api/projects', async (req, res) => {
+  try {
+    const list = await Project.find().sort({ createdAt: -1 });
+    res.json(list);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Get single project by id
+app.get('/api/projects/:id', async (req, res) => {
+  try {
+    const p = await Project.findById(req.params.id);
+    if (!p) return res.status(404).json({ error: 'Project not found' });
+    res.json(p);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Delete project
+app.delete('/api/projects/:id', async (req, res) => {
+  try {
+    await Project.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Add task to project
+app.post('/api/projects/:id/tasks', async (req, res) => {
+  try {
+    const { title, assignee, dueDate, notes } = req.body;
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    project.tasks.push({ title, assignee, dueDate: dueDate||null, notes });
+    await project.save();
+    res.status(201).json(project);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Toggle task completion (or set completed)
+app.patch('/api/projects/:projectId/tasks/:taskId', async (req, res) => {
+  try {
+    const { completed, title, assignee, dueDate, notes } = req.body;
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    const task = project.tasks.id(req.params.taskId);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    if (typeof completed === 'boolean') task.completed = completed;
+    if (title !== undefined) task.title = title;
+    if (assignee !== undefined) task.assignee = assignee;
+    if (dueDate !== undefined) task.dueDate = dueDate || null;
+    if (notes !== undefined) task.notes = notes;
+    await project.save();
+    res.json(project);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Delete a task
+app.delete('/api/projects/:projectId/tasks/:taskId', async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    project.tasks.id(req.params.taskId).remove();
+    await project.save();
+    res.json(project);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Update project (simple fields)
+app.patch('/api/projects/:id', async (req, res) => {
+  try {
+    const updates = (({ name, description, startDate, endDate, status }) => ({ name, description, startDate, endDate, status }))(req.body);
+    const p = await Project.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    res.json(p);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ------------------- Serve frontend HTML -------------------
+app.get('/', (req, res) => {
+  res.send(htmlPage);
+});
+
+// ------------------- Start server -------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(Server running: http://localhost:${PORT}));
+
+// ------------------- FRONTEND (HTML/CSS/JS) -------------------
+const htmlPage = `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Project Management (Single File)</title>
+  <style>
+    :root{--card:#fff;--bg:#f6f8fb;--accent:#2b7a78;--muted:#666}
+    body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);margin:0;padding:20px;color:#222}
+    .wrap{max-width:1000px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    .card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 6px 18px rgba(20,20,20,0.06)}
+    input,textarea,select,button{font-family:inherit}
+    input,select,textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-top:6px}
+    button{padding:8px 10px;border-radius:6px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+    .project-item{padding:10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .small{font-size:13px}
+    .task{padding:8px;border:1px solid #eee;border-radius:6px;margin-bottom:8px;background:#fafafa;display:flex;justify-content:space-between;align-items:center}
+    .task .meta{font-size:13px;color:var(--muted)}
+    .btn-ghost{background:transparent;color:var(--accent);border:1px solid #e6e6e6;padding:6px 8px;border-radius:6px;cursor:pointer}
+    .danger{background:#e85d5d}
+    .flex{display:flex;gap:8px;align-items:center}
+    label{font-weight:600;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Project Management System — Single File</h1>
+      <div class="muted">Simple demo: create projects, add tasks, toggle complete</div>
+    </header>
+
+    <div class="grid">
+      <!-- Left column: Projects & Tasks -->
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Create Project</h3>
+          <form id="projectForm">
+            <label>Project Name</label>
+            <input id="projName" required placeholder="e.g. Website Redesign" />
+            <label>Short Description</label>
+            <textarea id="projDesc" rows="2" placeholder="Optional description"></textarea>
+            <label>Start Date</label>
+            <input id="projStart" type="date" />
+            <label>End Date</label>
+            <input id="projEnd" type="date" />
+            <label>Status</label>
+            <select id="projStatus">
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
+              <option value="on-hold">On Hold</option>
+              <option value="completed">Completed</option>
+            </select>
+            <div style="margin-top:10px">
+              <button type="submit">Create Project</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Projects</h3>
+          <div id="projectsList">Loading projects…</div>
+        </div>
+      </div>
+
+      <!-- Right column: Selected project details -->
+      <div>
+        <div class="card">
+          <h3>Selected Project</h3>
+          <div id="selectedArea">
+            <div class="muted">Choose a project to view details</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Add Task</h3>
+          <form id="taskForm">
+            <label>Task Title</label>
+            <input id="taskTitle" placeholder="e.g. Create homepage layout" />
+            <label>Assignee</label>
+            <input id="taskAssignee" placeholder="Person name or email" />
+            <label>Due Date</label>
+            <input id="taskDue" type="date" />
+            <label>Notes</label>
+            <input id="taskNotes" placeholder="Optional notes" />
+            <div style="margin-top:10px">
+              <button id="addTaskBtn" type="button">Add Task to Selected Project</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = '/api';
+let projects = [];
+let selectedProjectId = null;
+
+// Utilities
+function el(tag, attrs={}, text=''){ const e = document.createElement(tag); for(const k in attrs) e.setAttribute(k, attrs[k]); if(text) e.innerHTML = text; return e; }
+function formatDate(d){ if(!d) return ''; const dt = new Date(d); return dt.toLocaleDateString(); }
+
+// Fetch and render projects
+async function loadProjects(){
+  const res = await fetch(API + '/projects');
+  projects = await res.json();
+  renderProjects();
+  if(selectedProjectId){
+    // keep selection if still exists
+    const exist = projects.find(p => p._id === selectedProjectId);
+    if(!exist) selectedProjectId = null;
+  }
+  renderSelected();
+}
+
+function renderProjects(){
+  const out = document.getElementById('projectsList');
+  out.innerHTML = '';
+  if(!projects.length){ out.innerHTML = '<div class="muted">No projects yet</div>'; return; }
+  projects.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'project-item';
+    const left = document.createElement('div');
+    left.innerHTML = '<strong>' + escapeHtml(p.name) + '</strong><div class="muted small">' + escapeHtml(p.description || '') + '</div>';
+    const right = document.createElement('div');
+    right.style.textAlign = 'right';
+    const meta = document.createElement('div');
+    meta.className = 'muted small';
+    meta.innerHTML = p.status + (p.endDate ? ' • due ' + formatDate(p.endDate) : '');
+    const btns = document.createElement('div');
+    btns.className = 'flex';
+    const openBtn = document.createElement('button');
+    openBtn.className = 'btn-ghost';
+    openBtn.textContent = 'Open';
+    openBtn.onclick = () => { selectedProjectId = p._id; renderSelected(); };
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-ghost danger';
+    delBtn.textContent = 'Delete';
+    delBtn.onclick = async () => {
+      if(!confirm('Delete project and its tasks?')) return;
+      await fetch(API + '/projects/' + p._id, { method: 'DELETE' });
+      await loadProjects();
+    };
+    btns.appendChild(openBtn); btns.appendChild(delBtn);
+    right.appendChild(meta); right.appendChild(btns);
+    item.appendChild(left); item.appendChild(right);
+    out.appendChild(item);
+  });
+}
+
+// Render selected project details & tasks
+function renderSelected(){
+  const area = document.getElementById('selectedArea');
+  area.innerHTML = '';
+  if(!selectedProjectId){ area.innerHTML = '<div class="muted">Choose a project to view details</div>'; return; }
+  const p = projects.find(x => x._id === selectedProjectId);
+  if(!p) { area.innerHTML = '<div class="muted">Project not found</div>'; return; }
+
+  const title = el('div', {}, '<strong>' + escapeHtml(p.name) + '</strong>');
+  const desc = el('div', {class:'muted small'}, escapeHtml(p.description || ''));
+  const dates = el('div', {class:'small muted'}, 'Start: ' + (p.startDate ? formatDate(p.startDate) : '-') + ' • End: ' + (p.endDate ? formatDate(p.endDate) : '-'));
+  const status = el('div', {class:'small muted'}, 'Status: ' + p.status);
+  const taskHeader = el('h4', {}, 'Tasks (' + (p.tasks ? p.tasks.length : 0) + ')');
+
+  area.appendChild(title); area.appendChild(desc); area.appendChild(dates); area.appendChild(status); area.appendChild(taskHeader);
+
+  // Tasks
+  const tasksDiv = el('div');
+  if(!p.tasks || !p.tasks.length) {
+    tasksDiv.innerHTML = '<div class="muted">No tasks yet</div>';
+  } else {
+    p.tasks.forEach(t => {
+      const tdiv = el('div', {class:'task'});
+      const left = el('div');
+      left.innerHTML = '<strong>' + escapeHtml(t.title) + '</strong><div class="meta">' + (t.assignee ? 'Assigned to ' + escapeHtml(t.assignee) + ' • ' : '') + (t.dueDate ? 'Due ' + formatDate(t.dueDate) : '') + '</div>';
+      const right = el('div');
+      right.className = 'flex';
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.checked = !!t.completed;
+      chk.onchange = async () => {
+        await fetch(API + '/projects/' + p._id + '/tasks/' + t._id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: chk.checked })
+        });
+        await loadProjects();
+      };
+      const noteBtn = document.createElement('button'); noteBtn.className='btn-ghost'; noteBtn.textContent='Notes';
+      noteBtn.onclick = () => alert(t.notes || 'No notes');
+      const delBtn = document.createElement('button'); delBtn.className='btn-ghost danger'; delBtn.textContent='Delete';
+      delBtn.onclick = async () => {
+        if(!confirm('Delete task?')) return;
+        await fetch(API + '/projects/' + p._id + '/tasks/' + t._id, { method: 'DELETE' });
+        await loadProjects();
+      };
+      right.appendChild(chk); right.appendChild(noteBtn); right.appendChild(delBtn);
+      tdiv.appendChild(left); tdiv.appendChild(right);
+      tasksDiv.appendChild(tdiv);
+    });
+  }
+  area.appendChild(tasksDiv);
+
+  // Edit project quick update (status)
+  const updDiv = el('div', {style:'margin-top:10px'});
+  updDiv.innerHTML = '<label>Update Status</label>';
+  const statusSel = el('select'); ['planning','active','on-hold','completed'].forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.text = s; if(p.status===s) o.selected = true; statusSel.appendChild(o);
+  });
+  const saveBtn = document.createElement('button'); saveBtn.textContent = 'Save';
+  saveBtn.style.marginTop='6px';
+  saveBtn.onclick = async () => {
+    await fetch(API + '/projects/' + p._id, {
+      method: 'PATCH', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ status: statusSel.value })
+    });
+    await loadProjects();
+  };
+  updDiv.appendChild(statusSel); updDiv.appendChild(saveBtn);
+  area.appendChild(updDiv);
+}
+
+
+// Create project form handling
+document.getElementById('projectForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('projName').value.trim();
+  const description = document.getElementById('projDesc').value.trim();
+  const startDate = document.getElementById('projStart').value || null;
+  const endDate = document.getElementById('projEnd').value || null;
+  const status = document.getElementById('projStatus').value;
+  if(!name) return alert('Enter project name');
+  await fetch(API + '/projects', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, description, startDate, endDate, status })});
+  document.getElementById('projectForm').reset();
+  await loadProjects();
+});
+
+// Add task to selected project
+document.getElementById('addTaskBtn').addEventListener('click', async () => {
+  if(!selectedProjectId) return alert('Select a project first (Open)');
+  const title = document.getElementById('taskTitle').value.trim();
+  const assignee = document.getElementById('taskAssignee').value.trim();
+  const dueDate = document.getElementById('taskDue').value || null;
+  const notes = document.getElementById('taskNotes').value.trim();
+  if(!title) return alert('Enter task title');
+  await fetch(API + '/projects/' + selectedProjectId + '/tasks', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title, assignee, dueDate, notes })
+  });
+  document.getElementById('taskForm').reset();
+  await loadProjects();
+});
+
+// Escape HTML
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// initial load
+loadProjects();
+</script>
+</body>
+</html>
+`;

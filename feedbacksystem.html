@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Feedback System — Single File</title>
+<style>
+  :root{--bg:#f4f7fb;--card:#fff;--accent:#2b7a78;--muted:#6b7280}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:#111}
+  .wrap{max-width:900px;margin:28px auto;padding:16px}
+  .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(30,30,30,0.06);margin-bottom:14px}
+  h1{margin:0 0 8px;font-size:20px}
+  p.lead{margin:0;color:var(--muted);font-size:14px}
+  form .row{display:flex;gap:12px;margin-top:12px}
+  label{display:block;font-size:13px;color:#333;margin-bottom:6px}
+  input[type="text"],input[type="email"],textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #dfe6ee;background:#fff;font-size:14px}
+  textarea{min-height:90px;resize:vertical}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+  button.secondary{background:transparent;color:var(--accent);border:1px solid #e3f0ef}
+  .rating {display:flex;gap:6px;align-items:center;margin-top:6px}
+  .star{font-size:22px;cursor:pointer;color:#ddd}
+  .star.active{color:#ffb020}
+  .muted{color:var(--muted);font-size:13px}
+  .stats{display:flex;gap:16px;align-items:center;margin-top:12px}
+  .list{margin-top:12px}
+  .fb-item{border-top:1px solid #eef2f6;padding:12px 0;display:flex;justify-content:space-between;gap:12px}
+  .fb-left{max-width:78%}
+  .meta{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .tag{display:inline-block;background:#eef7f6;color:#0b6b61;padding:4px 8px;border-radius:999px;font-size:12px;margin-right:6px}
+  .small-btn{background:#fff;border:1px solid #e6eef0;padding:6px 8px;border-radius:6px;cursor:pointer}
+  .empty{padding:18px;color:var(--muted);font-style:italic}
+  @media (max-width:720px){ .row{flex-direction:column} .fb-left{max-width:100%}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Feedback System</h1>
+      <p class="lead">Collect user feedback with rating and comments. Stored locally in your browser.</p>
+
+      <form id="fbForm" autocomplete="off">
+        <div class="row">
+          <div style="flex:1">
+            <label for="name">Name (optional)</label>
+            <input id="name" type="text" placeholder="Your name">
+          </div>
+          <div style="width:220px">
+            <label for="email">Email (optional)</label>
+            <input id="email" type="email" placeholder="you@example.com">
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="General">General</option>
+            <option value="Bug">Bug</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="UI/UX">UI/UX</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>Rating</label>
+          <div class="rating" id="rating">
+            <span class="star" data-value="1" role="button" aria-label="1 star">★</span>
+            <span class="star" data-value="2" role="button" aria-label="2 stars">★</span>
+            <span class="star" data-value="3" role="button" aria-label="3 stars">★</span>
+            <span class="star" data-value="4" role="button" aria-label="4 stars">★</span>
+            <span class="star" data-value="5" role="button" aria-label="5 stars">★</span>
+            <span class="muted" id="ratingLabel">No rating</span>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label for="message">Feedback</label>
+          <textarea id="message" placeholder="Tell us what's on your mind..." required></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit">Send Feedback</button>
+          <button type="button" id="clearAll" class="secondary">Clear All</button>
+          <button type="button" id="exportCsv" class="secondary">Export CSV</button>
+        </div>
+      </form>
+
+      <div class="stats" id="summary" aria-live="polite" style="margin-top:14px">
+        <!-- avg rating and counts injected here -->
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Feedbacks</h2>
+      <div id="listArea" class="list"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'feedback_system_entries_v1';
+  const form = document.getElementById('fbForm');
+  const stars = Array.from(document.querySelectorAll('.star'));
+  const ratingLabel = document.getElementById('ratingLabel');
+  const messageInput = document.getElementById('message');
+  const listArea = document.getElementById('listArea');
+  const summary = document.getElementById('summary');
+  const clearAllBtn = document.getElementById('clearAll');
+  const exportBtn = document.getElementById('exportCsv');
+
+  let currentRating = 0;
+
+  // helper: load entries
+  function loadEntries(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e){ return []; } }
+  function saveEntries(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+  // star handling
+  function setRating(r){
+    currentRating = r;
+    stars.forEach(s => {
+      const v = Number(s.dataset.value);
+      s.classList.toggle('active', v <= r);
+    });
+    ratingLabel.textContent = r ? (r + ' star' + (r>1 ? 's' : '')) : 'No rating';
+  }
+  stars.forEach(s => {
+    s.addEventListener('click', () => setRating(Number(s.dataset.value)));
+    s.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') setRating(Number(s.dataset.value)); });
+  });
+
+  // render list & summary
+  function render(){
+    const entries = loadEntries().sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+    listArea.innerHTML = '';
+    if(!entries.length){
+      listArea.innerHTML = '<div class="empty">No feedback yet — be the first!</div>';
+    } else {
+      entries.forEach((fb, idx) => {
+        const item = document.createElement('div'); item.className='fb-item';
+        const left = document.createElement('div'); left.className='fb-left';
+        const meta = document.createElement('div'); meta.className='meta';
+        const who = fb.name ? escapeHtml(fb.name) + (fb.email ? ' • ' + escapeHtml(fb.email) : '') : (fb.email ? escapeHtml(fb.email) : 'Anonymous');
+        meta.innerHTML = who + ' • <span class="muted">' + escapeHtml(fb.category) + '</span> • ' + new Date(fb.ts).toLocaleString();
+        const ratingLine = document.createElement('div');
+        ratingLine.innerHTML = renderStarsStatic(fb.rating) + (fb.rating ? ' <span class="muted">(' + fb.rating + '/5)</span>' : ' <span class="muted">(no rating)</span>');
+        const msg = document.createElement('div'); msg.style.marginTop='8px'; msg.textContent = fb.message;
+        left.appendChild(meta); left.appendChild(ratingLine); left.appendChild(msg);
+
+        const right = document.createElement('div'); right.style.textAlign='right';
+        const del = document.createElement('button'); del.className='small-btn'; del.textContent='Delete';
+        del.addEventListener('click', ()=>{ if(confirm('Delete this feedback?')) { entries.splice(idx,1); saveEntries(entries); render(); }});
+        right.appendChild(del);
+
+        item.appendChild(left); item.appendChild(right);
+        listArea.appendChild(item);
+      });
+    }
+
+    // summary
+    const count = entries.length;
+    const avg = entries.reduce((s,e)=>s+(e.rating||0),0) / (count||1);
+    summary.innerHTML = '';
+    const s1 = document.createElement('div'); s1.innerHTML = '<strong>' + count + '</strong> feedback(s)';
+    const s2 = document.createElement('div'); s2.style.marginLeft='12px'; s2.innerHTML = '<strong>' + (count? (avg.toFixed(2)) : '-') + '</strong> average rating';
+    summary.appendChild(s1); summary.appendChild(s2);
+  }
+
+  function renderStarsStatic(n){
+    n = Number(n)||0;
+    let out = '';
+    for(let i=1;i<=5;i++){
+      out += (i<=n) ? '★' : '☆';
+    }
+    return '<span style="color:#ffb020;font-size:16px">'+out+'</span>';
+  }
+
+  // sanitize for text nodes
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // form submit
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const category = document.getElementById('category').value;
+    const message = messageInput.value.trim();
+    if(!message){ alert('Please write some feedback.'); messageInput.focus(); return; }
+    const entries = loadEntries();
+    entries.push({ name, email, category, rating: currentRating, message, ts: new Date().toISOString() });
+    saveEntries(entries);
+    // reset
+    form.reset();
+    setRating(0);
+    render();
+    alert('Thanks — feedback saved locally in your browser.');
+  });
+
+  // clear all
+  clearAllBtn.addEventListener('click', ()=>{
+    if(confirm('Clear all feedbacks from local storage?')){ localStorage.removeItem(STORAGE_KEY); render(); }
+  });
+
+  // export CSV
+  exportBtn.addEventListener('click', ()=>{
+    const entries = loadEntries();
+    if(!entries.length){ alert('No entries to export.'); return; }
+    const header = ['Name','Email','Category','Rating','Message','Timestamp'];
+    const rows = entries.map(e => [e.name||'', e.email||'', e.category||'', e.rating||'', e.message.replace(/\r?\n/g,' '), e.ts]);
+    const csv = [header, ...rows].map(r => r.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'feedback_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // initial
+  setRating(0);
+  render();
+
+})();
+</script>
+</body>
+</html>
