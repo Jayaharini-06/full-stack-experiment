@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Food Delivery</title>
+  <style>
+    /* Background & Font */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Logo */
+    #logo {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(45deg, #ff6a00, #ee0979);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      user-select: none;
+      letter-spacing: 2px;
+      text-align: center;
+      font-family: 'Pacifico', cursive;
+    }
+
+    /* Headings */
+    h1, h2 {
+      color: #444;
+      margin: 10px 0;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    /* Restaurant List */
+    #restaurant-list {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .restaurant {
+      cursor: pointer;
+      padding: 12px 25px;
+      background-color: #ff8c00;
+      border-radius: 25px;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 4px 6px rgba(255, 140, 0, 0.5);
+      transition: background-color 0.3s, box-shadow 0.3s;
+      user-select: none;
+    }
+    .restaurant:hover, .restaurant.active {
+      background-color: #ee0979;
+      box-shadow: 0 6px 10px rgba(238, 9, 121, 0.7);
+    }
+
+    /* Food Menu */
+    #food-menu {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      justify-content: center;
+      max-width: 1000px;
+      margin-bottom: 25px;
+    }
+    .food-item {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+      width: 220px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .food-item:hover {
+      transform: scale(1.05);
+    }
+    .food-item img {
+      width: 180px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .food-name {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: #ff6a00;
+      font-weight: 700;
+    }
+    .food-price {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+    }
+    .qty-input {
+      width: 50px;
+      padding: 6px;
+      font-size: 16px;
+      text-align: center;
+      border: 1.5px solid #ff8c00;
+      border-radius: 6px;
+      outline-offset: 2px;
+      transition: border-color 0.3s;
+    }
+    .qty-input:focus {
+      border-color: #ee0979;
+      outline: none;
+    }
+
+    /* Order section */
+    #order-section {
+      margin-top: 15px;
+      text-align: center;
+      width: 100%;
+      max-width: 1000px;
+    }
+    #order-btn {
+      background-color: #ee0979;
+      border: none;
+      color: white;
+      padding: 14px 30px;
+      font-size: 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 5px 15px rgba(238, 9, 121, 0.6);
+      transition: background-color 0.3s, box-shadow 0.3s;
+    }
+    #order-btn:hover {
+      background-color: #ff6a00;
+      box-shadow: 0 7px 20px rgba(255, 106, 0, 0.7);
+    }
+    #total-price {
+      margin-top: 28px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #27ae60;
+      user-select: none;
+    }
+    #total-price.error {
+      color: #e74c3c;
+    }
+
+    /* Restaurant Info */
+    #restaurant-info {
+      background: white;
+      max-width: 1000px;
+      padding: 18px 25px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin-top: 30px;
+      text-align: left;
+      font-size: 16px;
+      color: #555;
+    }
+    #restaurant-info h3 {
+      color: #ff6a00;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    #restaurant-info p {
+      margin: 6px 0;
+      line-height: 1.4;
+    }
+    .rating {
+      display: inline-block;
+      color: #f39c12;
+      font-weight: 700;
+      margin-left: 8px;
+      font-size: 18px;
+      user-select: none;
+    }
+  </style>
+
+  <!-- Import Google Font for logo -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+
+</head>
+<body>
+
+  <div id="logo">FoodZest</div>
+  <h1>Delicious Food Delivered to Your Doorstep</h1>
+
+  <h2>Select a Restaurant</h2>
+  <div id="restaurant-list">
+    <!-- Restaurants injected here -->
+  </div>
+
+  <h2>Menu</h2>
+  <div id="food-menu">
+    <!-- Food items injected here -->
+  </div>
+
+  <div id="order-section">
+    <button id="order-btn">Place Order</button>
+    <div id="total-price"></div>
+  </div>
+
+  <div id="restaurant-info">
+    <!-- Contact info, address, rating -->
+  </div>
+
+<script>
+  // Updated data with address, contact, ratings for restaurants
+  const restaurants = [
+    {
+      name: "Pizza Palace",
+      deliveryCharge: 5,
+      contact: "(555) 123-4567",
+      address: "123 Main St, Springfield",
+      rating: 4.5,
+      menu: [
+        { name: "Margherita Pizza", price: 12, image: "https://images.unsplash.com/photo-1601924572975-4663dbd9b6a1?auto=format&fit=crop&w=800&q=80" },
+        { name: "Pepperoni Pizza", price: 15, image: "https://images.unsplash.com/photo-1548365328-cb2ac1a7d3ff?auto=format&fit=crop&w=800&q=80" },
+        { name: "Veggie Pizza", price: 13, image: "https://images.unsplash.com/photo-1565299543923-37b9b43cc12d?auto=format&fit=crop&w=800&q=80" }
+      ]
+    },
+    {
+      name: "Sushi World",
+      deliveryCharge: 7,
+      contact: "(555) 987-6543",
+      address: "456 Ocean Blvd, Springfield",
+      rating: 4.8,
+      menu: [
+        { name: "Salmon Roll", price: 10, image: "https://images.unsplash.com/photo-1562158070-b4a2dfb15331?auto=format&fit=crop&w=800&q=80" },
+        { name: "Tuna Sashimi", price: 18, image: "https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80" },
+        { name: "Avocado Roll", price: 8, image: "https://images.unsplash.com/photo-1553621042-0c91d604a4a0?auto=format&fit=crop&w=800&q=80" }
+      ]
+    },
+    {
+      name: "Burger Hub",
+      deliveryCharge: 4,
+      contact: "(555) 246-8100",
+      address: "789 Burger Ln, Springfield",
+      rating: 4.2,
+      menu: [
+        { name: "Classic Burger", price: 9, image: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=80" },
+        { name: "Cheese Burger", price: 11, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80" },
+        { name: "Veggie Burger", price: 10, image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80" }
+      ]
+    }
+  ];
+
+  const restaurantListDiv = document.getElementById('restaurant-list');
+  const foodMenuDiv = document.getElementById('food-menu');
+  const orderBtn = document.getElementById('order-btn');
+  const totalPriceDiv = document.getElementById('total-price');
+  const restaurantInfoDiv = document.getElementById('restaurant-info');
+
+  let selectedRestaurantIndex = 0;
+
+  function renderRestaurants() {
+    restaurantListDiv.innerHTML = '';
+    restaurants.forEach((rest, index) => {
+      const restDiv = document.createElement('div');
+      restDiv.textContent = rest.name;
+      restDiv.className = 'restaurant' + (index === selectedRestaurantIndex ? ' active' : '');
+      restDiv.onclick = () => {
+        selectedRestaurantIndex = index;
+        renderRestaurants();
+        renderMenu();
+        renderRestaurantInfo();
+        totalPriceDiv.textContent = '';
+      };
+      restaurantListDiv.appendChild(restDiv);
+    });
+  }
+
+  function renderMenu() {
+    foodMenuDiv.innerHTML = '';
+    const menu = restaurants[selectedRestaurantIndex].menu;
+    menu.forEach((item, idx) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'food-item';
+
+      itemDiv.innerHTML = `
+        <img src="${item.image}" alt="${item.name}" />
+        <div class="food-name">${item.name}</div>
+        <div class="food-price">$${item.price.toFixed(2)}</div>
+        <input type="number" min="0" value="0" class="qty-input" data-index="${idx}" />
+      `;
+      foodMenuDiv.appendChild(itemDiv);
+    });
+  }
+
+  function renderRestaurantInfo() {
+    const rest = restaurants[selectedRestaurantIndex];
+    // Generate stars based on rating (max 5 stars)
+    let stars = '';
+    const fullStars = Math.floor(rest.rating);
+    const halfStar = rest.rating % 1 >= 0.5;
+    for(let i=0; i<fullStars; i++) stars += '★';
+    if(halfStar) stars += '☆';
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    for(let i=0; i<emptyStars; i++) stars += '☆';
+
+    restaurantInfoDiv.innerHTML = `
+      <h3>Contact Info & Address</h3>
+      <p><strong>Phone:</strong> ${rest.contact}</p>
+      <p><strong>Address:</strong> ${rest.address}</p>
+      <p><strong>Rating:</strong> <span class="rating">${stars} (${rest.rating.toFixed(1)})</span></p>
+    `;
+  }
+
+  orderBtn.addEventListener('click', () => {
+    const quantities = [...document.querySelectorAll('.qty-input')];
+    const menu = restaurants[selectedRestaurantIndex].menu;
+    let subtotal = 0;
+
+    quantities.forEach(input => {
+      const qty = parseInt(input.value) || 0;
+      const idx = input.getAttribute('data-index');
+      subtotal += qty * menu[idx].price;
+    });
+
+    if (subtotal === 0) {
+      totalPriceDiv.classList.add('error');
+      totalPriceDiv.textContent = "Please select at least one item.";
+      return;
+    }
+
+    totalPriceDiv.classList.remove('error');
+    const deliveryCharge = restaurants[selectedRestaurantIndex].deliveryCharge;
+    const total = subtotal + deliveryCharge;
+
+    totalPriceDiv.textContent = Subtotal: $${subtotal.toFixed(2)} | Delivery: $${deliveryCharge.toFixed(2)} | Total: $${total.toFixed(2)};
+  });
+
+  // Initial render
+  renderRestaurants();
+  renderMenu();
+  renderRestaurantInfo();
+</script>
+
+</body>
+</html>
