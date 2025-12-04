@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Twittiii</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(#ffffe0, #e0f7fa, #bbdefb);
+    }
+
+    h1 {
+      text-align: center;
+      color: #1DA1F2;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .left {
+      flex: 2;
+    }
+
+    .right {
+      flex: 3;
+    }
+
+    /* Post box */
+    .post-box {
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 60px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+      resize: none;
+    }
+
+    .post-btn {
+      margin-top: 5px;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      background-color: #1DA1F2;
+      color: white;
+    }
+
+    /* Follow buttons */
+    .follow-btn, .unfollow-btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .follow-btn {
+      background-color: #1DA1F2;
+      color: white;
+    }
+
+    .unfollow-btn {
+      background-color: #777;
+      color: white;
+    }
+
+    /* Timeline */
+    .timeline {
+      margin-top: 10px;
+    }
+
+    .tweet {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 15px;
+      background-color: #fff;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .tweet-header {
+      font-weight: bold;
+      color: #1DA1F2;
+      margin-bottom: 4px;
+    }
+
+    .timestamp {
+      font-size: 12px;
+      color: gray;
+      margin-left: 5px;
+    }
+
+    .reactions {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    .reaction {
+      cursor: pointer;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Twittiii</h1>
+  <p><strong>Logged in as:</strong> Harini</p>
+
+  <div class="container">
+    <!-- Left -->
+    <div class="left">
+      <div class="post-box">
+        <h3>Post a new Tweet</h3>
+        <textarea id="tweetInput" placeholder="What's happening?"></textarea><br>
+        <button class="post-btn" onclick="postTweet()">Post</button>
+      </div>
+
+      <h3>Suggested Users to Follow</h3>
+      <div id="suggestedUsers">
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Kani</button>
+        <button class="unfollow-btn" onclick="toggleFollow(this)">Unfollow Elaki</button>
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Gayathri</button>
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Manisha</button>
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Kavitha</button>
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Tamizh</button>
+        <button class="unfollow-btn" onclick="toggleFollow(this)">Unfollow Hari</button>
+        <button class="follow-btn" onclick="toggleFollow(this)">Follow Vishnu</button>
+        <button class="unfollow-btn" onclick="toggleFollow(this)">Unfollow Dharshini</button>
+        <button class="unfollow-btn" onclick="toggleFollow(this)">Unfollow Saakshi</button>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="right">
+      <h3>Timeline (Posts from users you follow or who follow you, plus your own)</h3>
+      <div class="timeline" id="timeline">
+        <div class="tweet">
+          <div class="tweet-header">Elaki <span class="timestamp">8/21/2025, 11:40 AM</span></div>
+          <p>Good morning everyone! 👏👍</p>
+          <div class="reactions">
+            <span class="reaction" onclick="toggleLike(this)">👏 <span class="count">1</span></span>
+            <span class="reaction" onclick="toggleLike(this)">👍 <span class="count">1</span></span>
+          </div>
+        </div>
+
+        <div class="tweet">
+          <div class="tweet-header">Kani <span class="timestamp">8/21/2025, 11:35 AM</span></div>
+          <p>Hey Harini, just joined Twittiii!</p>
+          <div class="reactions">
+            <span class="reaction" onclick="toggleLike(this)">👏 <span class="count">0</span></span>
+            <span class="reaction" onclick="toggleLike(this)">👍 <span class="count">0</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Post new tweet dynamically
+    function postTweet() {
+      let input = document.getElementById("tweetInput");
+      let text = input.value.trim();
+      if (text === "") return;
+
+      let timeline = document.getElementById("timeline");
+
+      let tweetDiv = document.createElement("div");
+      tweetDiv.className = "tweet";
+
+      let now = new Date();
+      let timeString = now.toLocaleString();
+
+      tweetDiv.innerHTML = `
+        <div class="tweet-header">Harini <span class="timestamp">${timeString}</span></div>
+        <p>${text}</p>
+        <div class="reactions">
+          <span class="reaction" onclick="toggleLike(this)">👏 <span class="count">0</span></span>
+          <span class="reaction" onclick="toggleLike(this)">👍 <span class="count">0</span></span>
+        </div>
+      `;
+
+      timeline.prepend(tweetDiv); // Add new tweet on top
+      input.value = "";
+    }
+
+    // Toggle Follow/Unfollow
+    function toggleFollow(btn) {
+      if (btn.classList.contains("follow-btn")) {
+        btn.classList.remove("follow-btn");
+        btn.classList.add("unfollow-btn");
+        btn.textContent = btn.textContent.replace("Follow", "Unfollow");
+      } else {
+        btn.classList.remove("unfollow-btn");
+        btn.classList.add("follow-btn");
+        btn.textContent = btn.textContent.replace("Unfollow", "Follow");
+      }
+    }
+
+    // Toggle Like/Unlike
+    function toggleLike(el) {
+      let countSpan = el.querySelector(".count");
+      let count = parseInt(countSpan.textContent);
+
+      if (el.classList.contains("liked")) {
+        count--;
+        el.classList.remove("liked");
+      } else {
+        count++;
+        el.classList.add("liked");
+      }
+
+      countSpan.textContent = count;
+    }
+  </script>
+</body>
+</html>
