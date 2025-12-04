@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classified Web App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #4CAF50;
+      padding: 20px;
+      text-align: center;
+      color: #fff;
+    }
+    main {
+      padding: 20px;
+    }
+    h1, h2 {
+      margin: 0;
+    }
+    .create-ad input[type="text"],
+    .create-ad textarea {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .create-ad button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    .ads {
+      margin-top: 20px;
+    }
+    .ad {
+      padding: 10px;
+      background-color: #f5f5f5;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Classified Web App</h1>
+  </header>
+  <main>
+    <div class="create-ad">
+      <h2>Create Ad</h2>
+      <form id="adForm">
+        <input type="text" id="adTitle" placeholder="Title" required>
+        <textarea id="adDescription" placeholder="Description" required></textarea>
+        <input type="text" id="adPrice" placeholder="Price" required>
+        <button type="submit">Create Ad</button>
+      </form>
+    </div>
+    <div class="ads" id="adsContainer"></div>
+  </main>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const adForm = document.getElementById('adForm');
+      const adsContainer = document.getElementById('adsContainer');
+      adForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const title = document.getElementById('adTitle').value;
+        const description = document.getElementById('adDescription').value;
+        const price = document.getElementById('adPrice').value;
+        const newAd = document.createElement('div');
+        newAd.classList.add('ad');
+        newAd.innerHTML = `
+          <h3>${title}</h3>
+          <p>${description}</p>
+          <p>Price: $${price}</p>
+        `;
+        adsContainer.appendChild(newAd);
+        document.getElementById('adTitle').value = '';
+        document.getElementById('adDescription').value = '';
+        document.getElementById('adPrice').value = '';
+      });
+    });
+  </script>
+</body>
+</html>
